@@ -14,6 +14,8 @@ A content-based movie recommendation system built with Python and Streamlit. Thi
    git clone [https://github.com/chhajerlokesh/movie-recommender-system.git](https://github.com/chhajerlokesh/movie-recommender-system.git)
    cd movie-recommender-system
 2. **Install Dependencies:**
+   ```bash
    pip install -r requirements.txt
 3. **Run the Application:**
+   ```bash
    streamlit run apple200.py
