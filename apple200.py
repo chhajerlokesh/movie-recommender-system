@@ -31,7 +31,7 @@ def load_data():
             st.write("Processing datasets (this takes ~60 seconds)...")
             
             
-            result = subprocess.run([sys.executable, "rebuild_pickle.py"], capture_output=True, text=True)
+            #result = subprocess.run([sys.executable, "rebuild_pickle.py"], capture_output=True, text=True)
             
             if result.returncode == 0:
                 st.write("✅ Files created successfully!")
