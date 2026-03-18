@@ -3,7 +3,9 @@ import ast
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import pickle
+import os
 
+# Helper functions for data cleaning
 def convert(obj):
     L = []
     for i in ast.literal_eval(obj):
@@ -30,25 +32,26 @@ def fetch_director(obj):
     return L
 
 def rebuild():
-    print("Starting data processing...")
+    print("🎬 Starting data processing...")
     
     # 1. Load Data
     movies = pd.read_csv('tmdb_5000_movies.csv')
     credits = pd.read_csv('tmdb_5000_credits.csv')
     
-    # 2. Merge
+    # 2. Merge on title
     movies = movies.merge(credits, on='title')
     
-    # 3. Select columns
+    # 3. Select columns and drop nulls
     movies = movies[['movie_id','title','overview','genres','keywords','cast','crew']]
     movies.dropna(inplace=True)
     
-    # 4. Clean Data
+    # 4. Clean Data (converting string lists to actual lists)
     movies['genres'] = movies['genres'].apply(convert)
     movies['keywords'] = movies['keywords'].apply(convert)
     movies['cast'] = movies['cast'].apply(convert3)
     movies['crew'] = movies['crew'].apply(fetch_director)
     
+    # Remove spaces from tags
     movies['overview'] = movies['overview'].apply(lambda x:x.split())
     movies['genres'] = movies['genres'].apply(lambda x:[i.replace(" ","") for i in x])
     movies['keywords'] = movies['keywords'].apply(lambda x:[i.replace(" ","") for i in x])
@@ -61,16 +64,22 @@ def rebuild():
     new_df['tags'] = new_df['tags'].apply(lambda x:" ".join(x))
     new_df['tags'] = new_df['tags'].apply(lambda x:x.lower())
     
+    # --- CRITICAL CHANGE FOR apple200.py ---
+    # Renaming 'title' to 'Title' to match your Streamlit script
+    new_df.rename(columns={'title': 'Title'}, inplace=True)
+    # ---------------------------------------
+    
     # 6. Vectorization & Similarity
+    print("🤖 Vectorizing and calculating similarity...")
     cv = CountVectorizer(max_features=5000, stop_words='english')
     vectors = cv.fit_transform(new_df['tags']).toarray()
     similarity = cosine_similarity(vectors)
     
     # 7. Save Files
-    print("Saving pickle files...")
+    print("💾 Saving movies.pkl and similarity.pkl...")
     pickle.dump(new_df, open('movies.pkl','wb'))
     pickle.dump(similarity, open('similarity.pkl','wb'))
-    print("Done! Files created successfully.")
+    print("✅ Done! Files created successfully.")
 
 if __name__ == "__main__":
     rebuild()
