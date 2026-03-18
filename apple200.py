@@ -9,8 +9,31 @@ import requests
 import urllib3
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import subprocess
+
+
+# Function to rebuild pickles if they are missing or cause errors
+def load_data():
+    try:
+        # Try loading the movies
+        movies = pickle.load(open('movies.pkl', 'rb'))
+        similarity = pickle.load(open('similarity.pkl', 'rb'))
+        return movies, similarity
+    except (FileNotFoundError, NotImplementedError, AttributeError):
+        with st.spinner('Generating data models for the first time... please wait.'):
+            # This runs your existing rebuild script
+            subprocess.run(["python", "rebuild_pickle.py"])
+            
+        # Try loading again after rebuilding
+        movies = pickle.load(open('movies.pkl', 'rb'))
+        similarity = pickle.load(open('similarity.pkl', 'rb'))
+        return movies, similarity
+
+# Use the function
+movies, similarity = load_data()
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 # ---- session with retry ----
 session = requests.Session()
