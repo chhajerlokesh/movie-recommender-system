@@ -12,22 +12,46 @@ from urllib3.util.retry import Retry
 import subprocess
 
 
-# Function to rebuild pickles if they are missing or cause errors
+import os
+import subprocess
+import streamlit as st
+import pickle
+import time
+
 def load_data():
-    try:
-        # Try loading the movies
-        movies = pickle.load(open('movies.pkl', 'rb'))
-        similarity = pickle.load(open('similarity.pkl', 'rb'))
-        return movies, similarity
-    except (FileNotFoundError, NotImplementedError, AttributeError):
-        with st.spinner('Generating data models for the first time... please wait.'):
-            # This runs your existing rebuild script
-            subprocess.run(["python", "rebuild_pickle.py"])
+    # File names
+    movie_file = 'movies.pkl'
+    similarity_file = 'similarity.pkl'
+
+    # If files don't exist, try to build them
+    if not os.path.exists(movie_file) or not os.path.exists(similarity_file):
+        with st.status("🛠️ Data models not found. Building them now...", expanded=True) as status:
+            st.write("Processing datasets (this takes ~60 seconds)...")
             
-        # Try loading again after rebuilding
-        movies = pickle.load(open('movies.pkl', 'rb'))
-        similarity = pickle.load(open('similarity.pkl', 'rb'))
+            # Run the rebuild script and wait for it to finish
+            result = subprocess.run(["python", "rebuild_pickle.py"], capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                st.write("✅ Files created successfully!")
+                status.update(label="Build Complete!", state="complete", expanded=False)
+            else:
+                st.error("❌ Rebuild script failed!")
+                st.code(result.stderr) # Show the error if it fails
+                st.stop()
+            
+            # Small delay to let the OS register the new files
+            time.sleep(2)
+
+    # Now load the files
+    try:
+        with open(movie_file, 'rb') as f:
+            movies = pickle.load(f)
+        with open(similarity_file, 'rb') as f:
+            similarity = pickle.load(f)
         return movies, similarity
+    except Exception as e:
+        st.error(f"Error loading files: {e}")
+        st.stop()
 
 # Use the function
 movies, similarity = load_data()
