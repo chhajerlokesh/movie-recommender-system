@@ -17,29 +17,31 @@ import subprocess
 import streamlit as st
 import pickle
 import time
+import sys 
+result = subprocess.run([sys.executable, "rebuild_pickle.py"], capture_output=True, text=True)
 
 def load_data():
-    # File names
+    
     movie_file = 'movies.pkl'
     similarity_file = 'similarity.pkl'
 
-    # If files don't exist, try to build them
+    
     if not os.path.exists(movie_file) or not os.path.exists(similarity_file):
         with st.status("🛠️ Data models not found. Building them now...", expanded=True) as status:
             st.write("Processing datasets (this takes ~60 seconds)...")
             
-            # Run the rebuild script and wait for it to finish
-            result = subprocess.run(["python", "rebuild_pickle.py"], capture_output=True, text=True)
+            
+            result = subprocess.run([sys.executable, "rebuild_pickle.py"], capture_output=True, text=True)
             
             if result.returncode == 0:
                 st.write("✅ Files created successfully!")
                 status.update(label="Build Complete!", state="complete", expanded=False)
             else:
                 st.error("❌ Rebuild script failed!")
-                st.code(result.stderr) # Show the error if it fails
+                st.code(result.stderr) 
                 st.stop()
             
-            # Small delay to let the OS register the new files
+            
             time.sleep(2)
 
     # Now load the files
