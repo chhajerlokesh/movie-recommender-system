@@ -3,61 +3,27 @@ import streamlit as st
 import requests
 import os
 API_KEY = "6ff81781a63ac2a231cf6b7cfc6ca8d2"
-
-
-import requests
 import urllib3
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import subprocess
 
+# Use absolute paths relative to the script location
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-import os
-import subprocess
-import streamlit as st
-import pickle
-import time
-import sys 
-result = subprocess.run([sys.executable, "rebuild_pickle.py"], capture_output=True, text=True)
-
+@st.cache_resource
 def load_data():
+    movie_path = os.path.join(BASE_DIR, 'movies.pkl')
+    sim_path = os.path.join(BASE_DIR, 'similarity.pkl')
     
-    movie_file = 'movies.pkl'
-    similarity_file = 'similarity.pkl'
+    with open(movie_path, 'rb') as f:
+        movies = pickle.load(f)
+    with open(sim_path, 'rb') as f:
+        similarity = pickle.load(f)
+        
+    return movies, similarity
 
-    
-    if not os.path.exists(movie_file) or not os.path.exists(similarity_file):
-        with st.status("🛠️ Data models not found. Building them now...", expanded=True) as status:
-            st.write("Processing datasets (this takes ~60 seconds)...")
-            
-            
-            #result = subprocess.run([sys.executable, "rebuild_pickle.py"], capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                st.write("✅ Files created successfully!")
-                status.update(label="Build Complete!", state="complete", expanded=False)
-            else:
-                st.error("❌ Rebuild script failed!")
-                st.code(result.stderr) 
-                st.stop()
-            
-            
-            time.sleep(2)
-
-    # Now load the files
-    try:
-        with open(movie_file, 'rb') as f:
-            movies = pickle.load(f)
-        with open(similarity_file, 'rb') as f:
-            similarity = pickle.load(f)
-        return movies, similarity
-    except Exception as e:
-        st.error(f"Error loading files: {e}")
-        st.stop()
-
-# Use the function
 movies, similarity = load_data()
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
